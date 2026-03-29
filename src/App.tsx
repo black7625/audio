@@ -18,22 +18,16 @@ import {
   Square,
   MicOff,
   Circle,
-  ChevronDown,
   ChevronUp,
   Mic2,
-  Filter,
-  Cpu,
-  Waves,
-  Power,
-  HelpCircle,
-  Settings,
-  AudioLines,
   ExternalLink,
+  Download,
   Monitor,
   Globe,
   CircleStop,
   PlayCircle,
-  CheckCircle2
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -41,6 +35,30 @@ import { twMerge } from 'tailwind-merge';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+function Tooltip({ children, text }: { children: React.ReactNode, text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      {children}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 bg-blue-600 text-white text-[11px] font-bold leading-relaxed rounded-2xl shadow-2xl z-[100] pointer-events-none border border-blue-400/30 text-center"
+          >
+            <div className="relative">
+              {text}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-blue-600" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 // --- Types ---
@@ -98,6 +116,7 @@ const translations = {
     testNote: "* Hãy ghi âm một đoạn ngắn để tự mình cảm nhận chất lượng âm thanh sau khi lọc.",
     readyBtn: "Sẵn sàng",
     guideBtn: "Hướng dẫn",
+    downloadBtn: "Tải VB-Cable",
     guideTitle: "Hướng Dẫn Kết Nối Chi Tiết",
     guideStep1: "Bước 1: Tải VC Cable",
     guideStep1Desc: "Tải và cài đặt 'VB-Audio Virtual Cable'. Đây là phần mềm trung gian để truyền âm thanh sạch sang các ứng dụng khác.",
@@ -161,6 +180,7 @@ const translations = {
     testNote: "* 请录制一段简短的音频，亲自感受过滤后的音质。",
     readyBtn: "就绪",
     guideBtn: "指南",
+    downloadBtn: "下载 VB-Cable",
     guideTitle: "详细连接指南",
     guideStep1: "第一步：下载 VC Cable",
     guideStep1Desc: "下载并安装 'VB-Audio Virtual Cable'。它是将清晰音频传输到其他应用的桥梁。",
@@ -224,6 +244,7 @@ const translations = {
     testNote: "* Record a short clip to experience the filtered audio quality.",
     readyBtn: "Ready",
     guideBtn: "Guide",
+    downloadBtn: "Download VB-Cable",
     guideTitle: "Detailed Connection Guide",
     guideStep1: "Step 1: Download VC Cable",
     guideStep1Desc: "Download and install 'VB-Audio Virtual Cable'. This acts as a bridge to route clean audio to other apps.",
@@ -265,7 +286,6 @@ export default function App() {
   const [recordingTime, setRecordingTime] = useState(0);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -558,18 +578,17 @@ export default function App() {
             </span>
           </div>
 
-          <button 
-            onClick={() => setShowGuide(!showGuide)}
-            className={cn(
-              "hidden md:flex items-center gap-3 px-4 py-2 rounded-2xl border transition-all",
-              showGuide 
-                ? "bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-lg shadow-blue-500/10" 
-                : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
-            )}
-          >
-            <HelpCircle size={14} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">{t.guideBtn}</span>
-          </button>
+          <Tooltip text={t.guideStep1Desc}>
+            <a 
+              href="https://vb-audio.com/Cable/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600/20 transition-all group"
+            >
+              <Download size={14} className="group-hover:bounce" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">{t.downloadBtn}</span>
+            </a>
+          </Tooltip>
 
           <button 
             onClick={getDevices}
@@ -626,34 +645,79 @@ export default function App() {
               </div>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4 relative z-10">
-                <button 
-                  onClick={isProcessing ? stopProcessing : startProcessing}
-                  className={cn(
-                    "flex-[2] py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-4 shadow-xl",
-                    isProcessing 
-                      ? "bg-red-500 text-white hover:bg-red-600 shadow-red-500/20" 
-                      : "bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98]"
-                  )}
-                >
-                  {isProcessing ? (
-                    <><Square size={20} fill="currentColor" /> {t.stopBtn}</>
-                  ) : (
-                    <><Play size={20} fill="currentColor" /> {t.startBtn}</>
-                  )}
-                </button>
+                <div className="flex-[2]">
+                  <Tooltip text={t.guideStep3Desc}>
+                    <button 
+                      onClick={isProcessing ? stopProcessing : startProcessing}
+                      className={cn(
+                        "w-full py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-4 shadow-xl",
+                        isProcessing 
+                          ? "bg-red-500 text-white hover:bg-red-600 shadow-red-500/20" 
+                          : "bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98]"
+                      )}
+                    >
+                      {isProcessing ? (
+                        <><Square size={20} fill="currentColor" /> {t.stopBtn}</>
+                      ) : (
+                        <><Play size={20} fill="currentColor" /> {t.startBtn}</>
+                      )}
+                    </button>
+                  </Tooltip>
+                </div>
                 
-                <button 
-                  onClick={() => setMonitor(!monitor)}
-                  className={cn(
-                    "flex-1 py-5 rounded-3xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 border",
-                    monitor 
-                      ? "bg-green-500/10 border-green-500/30 text-green-500" 
-                      : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
-                  )}
-                >
-                  <Headphones size={18} />
-                  {monitor ? t.monitoring : t.monitorBtn}
-                </button>
+                <div className="flex-1 flex gap-3">
+                  <Tooltip text="Nghe trực tiếp âm thanh sau khi đã lọc để kiểm tra chất lượng.">
+                    <button 
+                      onClick={() => setMonitor(!monitor)}
+                      className={cn(
+                        "h-full px-6 rounded-3xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 border",
+                        monitor 
+                          ? "bg-green-500/10 border-green-500/30 text-green-500" 
+                          : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
+                      )}
+                    >
+                      <Headphones size={18} />
+                      {monitor ? t.monitoring : t.monitorBtn}
+                    </button>
+                  </Tooltip>
+
+                  <div className="relative flex-1">
+                    {!isRecording ? (
+                      <Tooltip text={t.testNote}>
+                        <button 
+                          disabled={!isProcessing}
+                          onClick={startRecording}
+                          className="w-full h-full rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 hover:bg-white/10 transition-all disabled:opacity-20 group"
+                        >
+                          <Circle size={16} className="text-red-500 group-hover:scale-110 transition-transform" fill="currentColor" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">{t.startRecord}</span>
+                        </button>
+                      </Tooltip>
+                    ) : (
+                      <button 
+                        onClick={stopRecording}
+                        className="w-full h-full rounded-3xl bg-red-500/20 border border-red-500/30 flex items-center justify-center gap-2 animate-pulse"
+                      >
+                        <CircleStop size={16} className="text-red-500" fill="currentColor" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">00:{recordingTime.toString().padStart(2, '0')}</span>
+                      </button>
+                    )}
+
+                    {recordedUrl && !isRecording && (
+                      <motion.button
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        onClick={() => {
+                          const audio = new Audio(recordedUrl);
+                          audio.play();
+                        }}
+                        className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-500 transition-colors"
+                      >
+                        <Play size={14} fill="currentColor" />
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -684,52 +748,54 @@ export default function App() {
           <div className="lg:col-span-4 space-y-6">
             
             {/* Device Selection Card */}
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-5 space-y-5 shadow-xl">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 rounded-xl">
-                  <Settings2 size={18} className="text-blue-400" />
+            <Tooltip text={t.guideStep2Desc}>
+              <div className="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-5 space-y-5 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-xl">
+                    <Settings2 size={18} className="text-blue-400" />
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-white/80">{t.deviceTitle}</h2>
                 </div>
-                <h2 className="text-sm font-bold uppercase tracking-widest text-white/80">{t.deviceTitle}</h2>
-              </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.micLabel}</label>
-                  <div className="relative group">
-                    <select 
-                      value={selectedInput}
-                      onChange={(e) => setSelectedInput(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer group-hover:bg-white/10"
-                    >
-                      {inputs.map(d => (
-                        <option key={d.deviceId} value={d.deviceId} className="bg-[#0a0a0a]">{d.label}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-white/40 transition-colors">
-                      <Mic size={14} />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.micLabel}</label>
+                    <div className="relative group">
+                      <select 
+                        value={selectedInput}
+                        onChange={(e) => setSelectedInput(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer group-hover:bg-white/10"
+                      >
+                        {inputs.map(d => (
+                          <option key={d.deviceId} value={d.deviceId} className="bg-[#0a0a0a]">{d.label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-white/40 transition-colors">
+                        <Mic size={14} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.outputLabel}</label>
+                    <div className="relative group">
+                      <select 
+                        value={selectedOutput}
+                        onChange={(e) => setSelectedOutput(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer group-hover:bg-white/10"
+                      >
+                        {outputs.map(d => (
+                          <option key={d.deviceId} value={d.deviceId} className="bg-[#0a0a0a]">{d.label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-white/40 transition-colors">
+                        <Headphones size={14} />
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.outputLabel}</label>
-                  <div className="relative group">
-                    <select 
-                      value={selectedOutput}
-                      onChange={(e) => setSelectedOutput(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer group-hover:bg-white/10"
-                    >
-                      {outputs.map(d => (
-                        <option key={d.deviceId} value={d.deviceId} className="bg-[#0a0a0a]">{d.label}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-white/40 transition-colors">
-                      <Headphones size={14} />
-                    </div>
-                  </div>
-                </div>
               </div>
-            </div>
+            </Tooltip>
 
             {/* Quick Filters Card */}
             <div className="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-5 space-y-5 shadow-xl">
@@ -843,140 +909,6 @@ export default function App() {
                 )}
               </AnimatePresence>
             </div>
-          </div>
-        </div>
-
-        {/* Bottom Section: Testing & Guide */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Audio Test Card */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-6 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/10 rounded-xl">
-                  <Mic size={18} className="text-red-500" />
-                </div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-white/80">{t.testTitle}</h3>
-              </div>
-              {isRecording && (
-                <div className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-xs font-mono font-bold text-red-500">00:{recordingTime.toString().padStart(2, '0')}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch gap-4">
-              {!isRecording ? (
-                <button 
-                  disabled={!isProcessing}
-                  onClick={startRecording}
-                  className="flex-1 flex items-center justify-center gap-3 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all disabled:opacity-30 group"
-                >
-                  <Circle size={18} className="text-red-500 group-hover:scale-110 transition-transform" fill="currentColor" />
-                  <span className="text-xs font-bold uppercase tracking-widest">{t.startRecord}</span>
-                </button>
-              ) : (
-                <button 
-                  onClick={stopRecording}
-                  className="flex-1 flex items-center justify-center gap-3 py-4 bg-red-500/20 border border-red-500/30 rounded-2xl hover:bg-red-500/30 transition-all"
-                >
-                  <CircleStop size={18} className="text-red-500" fill="currentColor" />
-                  <span className="text-xs font-bold uppercase tracking-widest">{t.stopRecord}</span>
-                </button>
-              )}
-
-              {recordedUrl && (
-                <div className="flex-1 flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-4 py-2">
-                  <PlayCircle size={24} className="text-blue-500 shrink-0" />
-                  <audio src={recordedUrl} controls className="h-8 flex-1 accent-blue-500" />
-                </div>
-              )}
-            </div>
-            
-            <p className="text-[10px] text-white/20 font-medium italic text-center">
-              {t.testNote}
-            </p>
-          </div>
-
-          {/* Integration Guide Section */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
-                <div className={cn("w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]", isProcessing ? "text-green-500 bg-green-500 animate-pulse" : "text-white/20 bg-white/20")} />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-                  {t.readyBtn}
-                </span>
-              </div>
-              
-              <button 
-                onClick={() => setShowGuide(!showGuide)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-2 rounded-2xl border transition-all",
-                  showGuide 
-                    ? "bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-lg shadow-blue-500/10" 
-                    : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
-                )}
-              >
-                <HelpCircle size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">{t.guideBtn}</span>
-                <motion.div animate={{ rotate: showGuide ? 180 : 0 }}>
-                  <ChevronDown size={14} />
-                </motion.div>
-              </button>
-            </div>
-            
-            <AnimatePresence>
-              {showGuide && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="bg-gradient-to-br from-blue-600/10 to-transparent border border-blue-500/10 rounded-[2rem] p-6 space-y-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">1</div>
-                        <p className="text-xs font-bold text-white/80">{t.guideStep1}</p>
-                        <p className="text-[11px] text-white/40 leading-relaxed">{t.guideStep1Desc}</p>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">2</div>
-                        <p className="text-xs font-bold text-white/80">{t.guideStep2}</p>
-                        <p className="text-[11px] text-white/40 leading-relaxed">{t.guideStep2Desc}</p>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">3</div>
-                        <p className="text-xs font-bold text-white/80">{t.guideStep3}</p>
-                        <p className="text-[11px] text-white/40 leading-relaxed">{t.guideStep3Desc}</p>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">4</div>
-                        <p className="text-xs font-bold text-white/80">{t.guideStep4}</p>
-                        <p className="text-[11px] text-white/40 leading-relaxed">{t.guideStep4Desc}</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-6 border-t border-blue-500/10">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400/60 mb-4 flex items-center gap-2">
-                        <Monitor size={12} /> {t.winGuideTitle}
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="space-y-1">
-                          <p className="text-[11px] font-bold text-white/70">{t.winStep1}</p>
-                          <p className="text-[10px] text-white/40">{t.winStep1Desc}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[11px] font-bold text-white/70">{t.winStep2}</p>
-                          <p className="text-[10px] text-white/40">{t.winStep2Desc}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       </main>

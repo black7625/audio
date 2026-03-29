@@ -1,0 +1,5 @@
+{
+  "name": "SonicPure: Audio Filter & Device Manager",
+  "description": "Professional-grade audio processing dashboard with noise cancellation, device selection, and real-time filtering.",
+  "requestFramePermissions": ["microphone"]
+}
